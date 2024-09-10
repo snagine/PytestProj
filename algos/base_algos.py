@@ -1,5 +1,7 @@
 import collections
 import re
+from math import ceil
+from collections import defaultdict
 
 
 class BaseAlgos:
@@ -127,6 +129,18 @@ class BaseAlgos:
                 return[element_seen[complement], i]
             element_seen[nums[i]] = i
         return [-1,-1]
+
+    def find_win_length(self, nums, k):
+        # curr is the current sum of the window
+        left = curr = ans = 0
+        for right in range(len(nums)):
+            curr += nums[right]
+            while curr > k:
+                curr -= nums[left]
+                left += 1
+            ans = max(ans, right - left + 1)
+
+        return ans
 
     # O(n)
     def find_sameletter_indexes_in_string(self,s: str) -> list:
@@ -258,17 +272,260 @@ class BaseAlgos:
                 res.add(0)
         return min(res)
 
+    def is_ele_avail(self, l: list, target: int) -> bool:
+        res = False
+        if len(l) == 0:
+            return res
 
+        l.sort() # O(log n)
+        left_in = 0
+        right_in = len(l)
 
-    # def maxNumberOfBalloons(self, text: str) -> int:
-    #     count_text = collections.Counter(text)
-    #     count_word = collections.Counter("balloon")
-    #     ans = set()
-    #     for key in count_word:
-    #         ans.add(count_text[key] // count_word[key])
-    #     return min(ans)
+        while left_in < right_in:
+            mid_in = (left_in + right_in) // 2
+            if l[mid_in] < target: # target is higher than mid
+                left_in = mid_in + 1
+            elif l[mid_in] > target:
+                right_in = mid_in
+            else:
+                return True
+        return res
 
+    def binary_search_last_occurance_index(self, arr, target):
+        left = 0
+        right = len(arr)
+        while left < right:
+            mid = (left + right) // 2
+            if arr[mid] > target:
+                right = mid
+            else:
+                left = mid + 1
 
+        return left - 1
+
+    def binary_search_first_occurance_index(self, arr, target):
+        left = 0
+        right = len(arr)
+        while left < right:
+            mid = (left + right) // 2
+            if arr[mid] >= target:
+                right = mid
+            else:
+                left = mid + 1
+
+        return left
+
+    def minEatingSpeed2(self, piles: list[int], h: int) -> int:
+        def hoursToEat(capacity: int):
+            hours_to_finish_pile = 0
+            for pile in piles:
+                hours_to_finish_pile += ceil(pile / capacity)
+            return hours_to_finish_pile <= h
+
+        left_limit = 1
+        right_limit = max(piles)
+        while left_limit <= right_limit:
+            mid = (left_limit + right_limit) // 2
+            speed_check = hoursToEat(mid)
+            if speed_check:
+                right_limit = mid - 1
+            else:
+                left_limit = mid + 1
+        return left_limit
+
+    def minEatingSpeed(self, piles: list[int], h: int) -> int:
+        def check(k):
+            hours = 0
+            for bananas in piles:
+                hours += ceil(bananas / k)
+            return hours <= h
+
+        left = 1
+        right = max(piles)
+        while left <= right:
+            mid = (left + right) // 2
+            if check(mid):
+                right = mid - 1
+            else:
+                left = mid + 1
+
+        return left
+
+    def answerQueries(self, nums: list[int], queries: list[int]) -> list[int]:
+        # Sort 'nums'
+        nums.sort()
+        ans = []
+
+        # For each query, collect numbers from lowest to highest.
+        # If their sum exceeds the limit 'query', move on to the next query.
+        for query in queries:
+            count = 0
+            for num in nums:
+                if query >= num:
+                    query -= num
+                    count += 1
+                else:
+                    break
+            ans.append(count)
+
+        return ans
+
+    def isSubsequence(self, s: str, t: str) -> bool:
+        sp = tp = 0
+
+        while sp < len(s) and tp < len(t):
+            if s[sp] == t[tp]:
+                sp += 1
+            tp += 1
+
+        return sp == len(s)
+
+    def twoSumSorted(self, nums: list[int], target: int) -> list[int]:
+        left = 0
+        right = len(nums) - 1
+        ans = []
+        while left < right:
+            cur = nums[left] + nums[right]
+            if cur > target:
+                right -= 1
+            elif cur < target:
+                left += 1
+            else:
+                ans.append(left)
+                ans.append(right)
+                return ans
+        return ans
+
+    def find_bin_zero_flip_longest_length(self, s): #1101100111
+        left = curr = ans = 0
+        for right in range(len(s)):
+            if s[right] == "0":
+                curr += 1
+            while curr>1:
+                if s[left] == "0":
+                    curr -= 1
+                left +=1
+            ans = max(ans, right - left +1)
+        return ans
+
+    def numSubarrayProductLessThanK(self, nums: list[int], k: int) -> int:
+        if k <= 1:
+            return 0
+        left = ans = 0
+        curr = 1
+
+        for right in range(len(nums)):
+            curr *= nums[right]
+            while curr >= k:
+                curr //= nums[left]
+                left += 1
+            ans += right - left + 1
+        return ans
+
+    def capitalized(self, s) -> str:
+        l = s.split(" ")
+        new = " ".join([i[0].upper() + i[1:] for i in l])
+        return new
+
+    def find_best_subarray(self, nums, k):
+        curr = 0
+        for i in range(k):
+            curr += nums[i]
+
+        ans = curr
+        for i in range(k, len(nums)):
+            curr += nums[i] - nums[i - k]
+            ans = max(ans, curr)
+
+        return ans
+
+    def findMaxAverage(self, nums: list[int], k: int) -> float:
+        curr = ans = 0
+        for i in range(k):
+            curr += nums[i]
+        ans = curr / k
+
+        for i in range(k, len(nums)):
+            curr += nums[i] - nums[i - k]
+            ans = max(ans, curr / k)
+        return ans
+
+    def longestOnes(self, nums: list[int], k: int) -> int:
+        left = 0
+        for right in range(len(nums)):
+            # If we included a zero in the window we reduce the value of k.
+            # Since k is the maximum zeros allowed in a window.
+            k -= 1 - nums[right]
+            # A negative k denotes we have consumed all allowed flips and window has
+            # more than allowed zeros, thus increment left pointer by 1 to keep the window size same.
+            if k < 0:
+                # If the left element to be thrown out is zero we increase k.
+                k += 1 - nums[left]
+                left += 1
+        return right - left + 1
+
+    def longestOnes(self, nums: list[int], k: int) -> int:
+        left = right = count = 0
+        while right < len(nums):
+            if nums[right] == 0:
+                count += 1
+            if count > k:
+                if nums[left] == 0:
+                    count -= 1
+                left += 1
+            right += 1
+        return right - left
+
+    def minStartValue(self, nums: list[int]) -> int:
+        startVal = ans = 0
+        for i in range(len(nums)):
+            startVal += nums[i]
+            ans = min(ans, startVal)
+
+        return -ans + 1
+
+    def find_longest_substring(self, s, k):
+        counter = defaultdict(int)
+        left = ans = 0
+        for right in range(len(s)):
+            counter[s[right]] += 1
+            while len(counter) > k:
+                counter[s[left]] -= 1
+                if counter[s[left]] == 0:
+                    del counter[s[left]]
+                left += 1
+            ans = max(ans, right - left + 1)
+        return ans
+
+    def areOccurrencesEqual(self, s: str) -> bool:
+        frequency = defaultdict(int)
+        for right in range(len(s)):
+            frequency[s[right]] += 1
+        curr = frequency[s[0]]
+        for key, val in frequency.items():
+            if val != curr:
+                return False
+        return True
+
+    def findMaxLength(self, nums: list[int]) -> int:
+        maxlen = 0
+        for start in range(len(nums)):
+            zeros = ones = 0
+            for end in range(start, len(nums)):
+                if nums[end] == 0:
+                    zeros += 1
+                else:
+                    ones += 1
+                if zeros == ones:
+                    maxlen = max(maxlen, end - start + 1)
+        return maxlen
+
+    def groupAnagrams(self, strs: list[str]) -> list[list[str]]:
+        hashmap = defaultdict(list)
+        for i in range(len(strs)):
+            sorted_word = "".join(sorted(strs[i]))
+            hashmap[sorted_word].append(strs[i])
+        return hashmap.values()
 
 
 
@@ -293,7 +550,41 @@ base_algos = BaseAlgos()
 # res = base_algos.find_largest_non_repeated([5,7,3,9,4,9,8,9,3,1])
 # res = base_algos.largestUniqueNumber([5,7,3,9,4,9,8,9,3,1])
 # res = base_algos.maxNumberOfBalloons("loonbalxballpoon")#("nlaebolko")
-res = base_algos.findWordOccurances("lloo")#("nlaebolk")
-
+# res = base_algos.findWordOccurances("lloo")#("nlaebolk")
+# res = base_algos.is_ele_avail([6,4,9,10,5,3,9,6], 6) # True, 1. sort  2. perform binary search
+# res = base_algos.binary_search_last_occurance_index([3,3,3,4,4,5,6,6,9], 3) #
+# res = base_algos.binary_search_first_occurance_index([3,3,3,4,4,5,6,6,9], 3)
+# res = base_algos.answerQueries([4, 2, 5, 1, 6, 13], [3, 10, 21, 2])
+# piles = [3,6,7,11]
+# h = 8 #4
+# piles = [30,11,23,4,20], h = 5 #30
+# piles = [30,11,23,4,20], h = 6 #23
+# res = base_algos.minEatingSpeed2(piles, h)
+# res = base_algos.isSubsequence("ab", "baab")
+# res = base_algos.twoSumSorted([2,3,4], 6)
+# res = base_algos.twoSum_byHash([3,2,4], 6)
+# res = base_algos.find_win_length([3, 1, 2, 7, 4, 2, 1, 1, 5], 8)
+# res = base_algos.find_bin_zero_flip_longest_length("1101100111")
+# res = base_algos.numSubarrayProductLessThanK([1, 1, 1], 1)
+# res = base_algos.capitalized("this is shylaja")
+# res = base_algos.find_best_subarray([-3, 1, 4, 12, -8, 5, 6], 4)
+# res = base_algos.findMaxAverage([1,12,-5,-6,50,3], 4)
+# res = base_algos.longestOnes([1,1,1,0,0,0,1,1,1,1,0], 2) # return 6
+# res = base_algos.minStartValue([-3,2,-3,4,2]) # return 5
+# res = base_algos.find_longest_substring("eceba", 2) # 3
+# res = base_algos.areOccurrencesEqual("abacbc")
+res = base_algos.findMaxLength([0,1,1,0]) # 2
+res = base_algos.groupAnagrams(["eat","tea","tan","ate","nat","bat"])
 print(res)
 
+# common mistakes
+###################
+# check indexes or values in conditions and loops
+# edge cases like empty / negatives to be on the top
+# have a default value to return after the edge case
+# return in the middle of loops/ conditions whenever the criteria is met
+# ask what to return on edge cases like -1 or False
+# list comprehension : use "for" at the end
+# cover in parantheses () if multiple math operations, especially as a denominator
+# split the string to list is based on the delimitor, if there is no delimitor use slicing directly
+# join list to string based on delimitor
